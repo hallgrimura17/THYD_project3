@@ -173,7 +173,7 @@ class ICG_BC_Visitor : public AST::Visitor {
      *  - You might want to have a look at the VariableExprNode implementation.
      *  - The private method store_nonarray_element might also be useful.
      * */
-
+/*
     auto entry = symbol_table_lookup( node->get_name() );
     if ( node->get_expr() != nullptr ) {
       setup_array_reference( node->get_expr(), entry );
@@ -181,7 +181,7 @@ class ICG_BC_Visitor : public AST::Visitor {
     }
     else {
       load_nonarray_value( entry );
-    }
+    }*/
   };
 
   ///////////////////////////////////////// Other Nodes /////////////////////////////////////////////////////////
