@@ -1,4 +1,4 @@
-Program logical;
+Program Test7;
 var
     b: Boolean;
 

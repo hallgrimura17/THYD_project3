@@ -1,4 +1,4 @@
-program qsort;
+program Test5;
 var
   data: array[1..30] of Integer;
   i: Integer;

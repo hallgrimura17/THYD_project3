@@ -99,12 +99,10 @@ class ICG_BC_Visitor : public AST::Visitor {
 
   void visit(AST::IfStmtNode *node) override {
     assert(node != nullptr);
-
-    /************************* TO DO: Implement this method ***************************/
-    BC::Label label_else = ic_.label_new();
-    BC::Label label_end = ic_.label_new();
     accept(node->get_expr());
+    BC::Label label_end = ic_.label_new();
     if (node->get_stmt_else() != nullptr){
+      BC::Label label_else = ic_.label_new();
       program_.push_back( ic_.bc_if( LNG::ExprOperator::o_eq, label_else ) );
       accept(node->get_stmt_if());
       program_.push_back( ic_.bc_goto( label_end ) );
@@ -115,7 +113,7 @@ class ICG_BC_Visitor : public AST::Visitor {
     else {
       program_.push_back( ic_.bc_if( LNG::ExprOperator::o_eq, label_end ) );
       accept(node->get_stmt_if());
-      program_.push_back( ic_.bc_goto( label_end ) );
+      program_.push_back( ic_.label( label_end ) );
     }
   };
 
@@ -527,16 +525,16 @@ class ICG_BC_Visitor : public AST::Visitor {
         program_.push_back( BC::Instr( BC::InstrCode::fdiv ) );
         break;
       case LNG::ExprOperator::o_minus:
-        program_.push_back( BC::Instr(BC::InstrCode::isub  ) );
+        program_.push_back( BC::Instr(BC::InstrCode::fsub  ) );
         break;
       case LNG::ExprOperator::o_multiply:
-        program_.push_back( BC::Instr( BC::InstrCode::imul ) );
+        program_.push_back( BC::Instr( BC::InstrCode::fmul ) );
         break;
       case LNG::ExprOperator::o_plus:
-        program_.push_back( BC::Instr( BC::InstrCode::iadd ) );
+        program_.push_back( BC::Instr( BC::InstrCode::fadd ) );
         break;
       case LNG::ExprOperator::o_uminus:
-        program_.push_back( BC::Instr( BC::InstrCode::ineg ) );
+        program_.push_back( BC::Instr( BC::InstrCode::fneg ) );
         break;
       default:
         assert( false );  // Should not happen.

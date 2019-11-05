@@ -1,4 +1,4 @@
-program fibonacci;
+program Test3;
 
   var n: integer;
 
@@ -8,7 +8,7 @@ program fibonacci;
     begin
       writeln(a + b);
       fib (a + b, a, i + 1, n)
-    end
+    end;
   end;
 
 begin

@@ -1,4 +1,4 @@
-program findgcd;
+program Test6;
   var
     a, b: Integer;
 

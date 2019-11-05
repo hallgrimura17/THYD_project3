@@ -41,7 +41,7 @@
 	getstatic	Field	Test	i	I
 	invokevirtual	Method	java/io/PrintStream	println	(I)V
 	ldc	0
-	ifeq	L3
+	ifne	L3
 	ldc	0
 	goto	L4
 L3:

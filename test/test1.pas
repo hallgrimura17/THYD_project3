@@ -1,4 +1,4 @@
-Program Test;
+Program Test1;
 var
     n: Integer;
     a, b: Integer;

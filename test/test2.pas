@@ -1,4 +1,4 @@
-Program Test;
+Program Test2;
 var
     n: Integer;
     r: Real;

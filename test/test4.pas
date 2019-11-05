@@ -1,4 +1,4 @@
-program pascal_triangle;
+program Test4;
 
     function binomial_coeff( n, k: Integer ) : Integer;
     var
