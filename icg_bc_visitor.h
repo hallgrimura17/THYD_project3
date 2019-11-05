@@ -495,6 +495,7 @@ class ICG_BC_Visitor : public AST::Visitor {
      *  - The relational operations are slightly different for floats, use 'fcmpl' followed by 'if'<cmp>.
      * */
 
+
     AST::ExprNode* lhs = node->get_lhs();
     AST::ExprNode* rhs = node->get_rhs();
     accept( lhs );
@@ -505,7 +506,6 @@ class ICG_BC_Visitor : public AST::Visitor {
     if (rhs->get_sdt() == LNG::SimpleDataType::tInteger){
         program_.push_back( ic_.bc_i2f() );
     }
-
     switch ( node->get_op() ) {
       case LNG::ExprOperator::o_eq:
       case LNG::ExprOperator::o_neq:
