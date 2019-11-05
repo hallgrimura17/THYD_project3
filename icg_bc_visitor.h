@@ -492,11 +492,49 @@ class ICG_BC_Visitor : public AST::Visitor {
      *  - The relational operations are slightly different for floats, use 'fcmpl' followed by 'if'<cmp>.
      * */
 
+
     AST::ExprNode* lhs = node->get_lhs();
     AST::ExprNode* rhs = node->get_rhs();
     accept( lhs );
     accept( rhs );
-
+    switch ( node->get_op() ) {
+      case LNG::ExprOperator::o_eq:
+      case LNG::ExprOperator::o_neq:
+      case LNG::ExprOperator::o_gt:
+      case LNG::ExprOperator::o_gteq:
+      case LNG::ExprOperator::o_lt:
+      case LNG::ExprOperator::o_lteq: {
+        BC::Label label_true = ic_.label_new();
+        BC::Label label_end = ic_.label_new();
+        program_.push_back(ic_.bc_fcmpl());
+        program_.push_back(ic_.bc_ldc(0));
+        program_.push_back(ic_.bc_goto(label_end));
+        program_.push_back(ic_.label(label_true));
+        program_.push_back(ic_.bc_ldc(1));
+        program_.push_back(ic_.label(label_end));
+      }
+        break;
+      case LNG::ExprOperator::o_div:
+        program_.push_back( BC::Instr( BC::InstrCode::idiv ) );
+        break;
+      case LNG::ExprOperator::o_minus:
+        if ( lhs == nullptr ) {
+          program_.push_back( BC::Instr( BC::InstrCode::ineg ) );
+        }
+        else { program_.push_back( BC::Instr(BC::InstrCode::isub)); }
+        break;
+      case LNG::ExprOperator::o_multiply:
+        program_.push_back( BC::Instr( BC::InstrCode::imul ) );
+        break;
+      case LNG::ExprOperator::o_plus:
+        program_.push_back( BC::Instr( BC::InstrCode::iadd ) );
+        break;
+      case LNG::ExprOperator::o_uminus:
+        program_.push_back( BC::Instr( BC::InstrCode::ineg ) );
+        break;
+      default:
+        assert( false );  // Should not happen.
+    }
   }
 
   void boolean_operations( AST::OpExprNode *node ) {
