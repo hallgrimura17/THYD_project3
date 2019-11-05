@@ -167,21 +167,24 @@ class ICG_BC_Visitor : public AST::Visitor {
 
   void visit(AST::AssignmentStmtNode *node) override {
     assert(node != nullptr);
-
-    /************************* TO DO: Implement this method ***************************/
-    /* Hint:
-     *  - You might want to have a look at the VariableExprNode implementation.
-     *  - The private method store_nonarray_element might also be useful.
-     * */
-/*
-    auto entry = symbol_table_lookup( node->get_name() );
-    if ( node->get_expr() != nullptr ) {
-      setup_array_reference( node->get_expr(), entry );
-      program_.push_back( ic_.bc_aload_sdt( node->get_sdt() ) );
+    accept(node->get_var());
+    auto entry = symbol_table_lookup( node->get_var()->get_name() );
+    assert( entry != nullptr );
+    if ( entry->data_type.is_array()) {
+      setup_array_reference( node->get_var()->get_expr(), entry );
+      accept(node->get_expr());
+      if(entry->data_type.get_sdt() == LNG::SimpleDataType::tReal && node->get_expr()->get_sdt() == LNG::SimpleDataType::tInteger){
+        program_.push_back( ic_.bc_i2f() );
+      }
+      program_.push_back( ic_.bc_astore_sdt( entry->data_type.get_sdt()) );
     }
     else {
-      load_nonarray_value( entry );
-    }*/
+      accept(node->get_expr());
+      if(entry->data_type.get_sdt() == LNG::SimpleDataType::tReal && node->get_expr()->get_sdt() == LNG::SimpleDataType::tInteger){
+        program_.push_back( ic_.bc_i2f() );
+      }
+      store_nonarray_value( entry );
+    }
   };
 
   ///////////////////////////////////////// Other Nodes /////////////////////////////////////////////////////////
@@ -495,8 +498,49 @@ class ICG_BC_Visitor : public AST::Visitor {
     AST::ExprNode* lhs = node->get_lhs();
     AST::ExprNode* rhs = node->get_rhs();
     accept( lhs );
+    if (lhs->get_sdt() == LNG::SimpleDataType::tInteger){
+        program_.push_back( ic_.bc_i2f() );
+    }
     accept( rhs );
+    if (rhs->get_sdt() == LNG::SimpleDataType::tInteger){
+        program_.push_back( ic_.bc_i2f() );
+    }
 
+    switch ( node->get_op() ) {
+      case LNG::ExprOperator::o_eq:
+      case LNG::ExprOperator::o_neq:
+      case LNG::ExprOperator::o_gt:
+      case LNG::ExprOperator::o_gteq:
+      case LNG::ExprOperator::o_lt:
+      case LNG::ExprOperator::o_lteq: {
+        BC::Label label_true = ic_.label_new();
+        BC::Label label_end = ic_.label_new();
+        program_.push_back(ic_.bc_fcmpl());
+        program_.push_back(ic_.bc_ldc(0));
+        program_.push_back(ic_.bc_goto(label_end));
+        program_.push_back(ic_.label(label_true));
+        program_.push_back(ic_.bc_ldc(1));
+        program_.push_back(ic_.label(label_end));
+      }
+        break;
+      case LNG::ExprOperator::o_divide:
+        program_.push_back( BC::Instr( BC::InstrCode::fdiv ) );
+        break;
+      case LNG::ExprOperator::o_minus:
+        program_.push_back( BC::Instr(BC::InstrCode::isub  ) );
+        break;
+      case LNG::ExprOperator::o_multiply:
+        program_.push_back( BC::Instr( BC::InstrCode::imul ) );
+        break;
+      case LNG::ExprOperator::o_plus:
+        program_.push_back( BC::Instr( BC::InstrCode::iadd ) );
+        break;
+      case LNG::ExprOperator::o_uminus:
+        program_.push_back( BC::Instr( BC::InstrCode::ineg ) );
+        break;
+      default:
+        assert( false );  // Should not happen.
+    }
   }
 
   void boolean_operations( AST::OpExprNode *node ) {
@@ -508,8 +552,35 @@ class ICG_BC_Visitor : public AST::Visitor {
      * */
     AST::ExprNode* lhs = node->get_lhs();
     AST::ExprNode* rhs = node->get_rhs();
+    auto op = node->get_op();
+    BC::Label label_cond = ic_.label_new();
+    BC::Label label_end = ic_.label_new();
+    if (op == LNG::ExprOperator::o_not) {
+      accept( rhs );
+      program_.push_back( ic_.bc_if( LNG::ExprOperator::o_eq, label_cond ) );
+      program_.push_back( ic_.bc_ldc( 0 ) );
+      program_.push_back( ic_.bc_goto( label_end ) );
+      program_.push_back( ic_.label( label_cond ) );
+      program_.push_back( ic_.bc_ldc( 1 ) );
+      program_.push_back( ic_.label( label_end ) );
+    }
     accept( lhs );
-    accept( rhs );
+    if (op == LNG::ExprOperator::o_or) {
+      program_.push_back( ic_.bc_ifne( label_cond ) );
+      accept( rhs );
+      program_.push_back( ic_.bc_goto( label_end ) );
+      program_.push_back( ic_.label( label_cond ) );
+      program_.push_back( ic_.bc_ldc( 1 ) );
+      program_.push_back( ic_.label( label_end ) );
+    }
+    else if (op == LNG::ExprOperator::o_and) {
+      program_.push_back( ic_.bc_ifeq( label_cond ) );
+      accept( rhs );
+      program_.push_back( ic_.bc_goto( label_end ) );
+      program_.push_back( ic_.label( label_cond ) );
+      program_.push_back( ic_.bc_ldc( 0 ) );
+      program_.push_back( ic_.label( label_end ) );
+    }
   }
 
   //
